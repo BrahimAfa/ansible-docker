@@ -1,0 +1,60 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  tasks:
+    - name: Install aptitude using apt
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: yes
+        force_apt_get: yes
+
+    - name: Install required system packages
+      apt:
+        name: {{ item }}
+        state: latest
+        update_cache: yes
+      loop:
+        [
+          "apt-transport-https",
+          "ca-certificates",
+          "curl",
+          "software-properties-common",
+        ]
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt:
+        update_cache: yes
+        name: docker-ce
+        state: latest
+
+    - name: get uname -s
+      shell: "uname -s"
+      register: unames
+
+    - name: get uname -m
+      shell: "uname -m"
+      register: unamem
+
+    - name: download docker compose
+      uri:
+        url: "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-{{unames.stdout}}-{{unamem.stdout}}"
+        method: GET
+        dest: "/usr/local/bin/docker-compose"
+      register: "output"
+
+    - name: chmod +x on docker-compose
+      shell: "chmod +x /usr/local/bin/docker-compose" ## change this to "file" module
+
+    - debug: var=output.msg

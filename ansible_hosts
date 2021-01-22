@@ -1,0 +1,4 @@
+[server]
+111.22.33.44  ansible_user=root
+
+# localhost ansible_connection=local
